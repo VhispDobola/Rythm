@@ -1,0 +1,6 @@
+pygame==2.6.1
+numpy>=2.0.0,<3.0.0
+ffpyplayer==4.5.3
+Pillow==11.3.0
+firebase-admin==6.2.0
+requests==2.32.3

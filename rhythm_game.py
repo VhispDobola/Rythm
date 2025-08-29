@@ -11,10 +11,105 @@ from sounds import SoundManager
 
 # Initialize Pygame and mixer
 pygame.init()
-mixer.init()
+pygame.mixer.init()
 
 # Constants
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 1200, 800
+
+# Song library
+SONG_LIBRARY = [
+    {
+        'id': 'default',
+        'title': 'Default Beat',
+        'file': 'sounds/default_beat.mp3',
+        'bpm': 120,
+        'difficulty_modes': {
+            'beginner': {'speed': 4, 'interval': (1000, 1300)},
+            'easy': {'speed': 5, 'interval': (800, 1100)},
+            'normal': {'speed': 6.5, 'interval': (600, 900)},
+            'hard': {'speed': 8, 'interval': (400, 700)},
+            'expert': {'speed': 10, 'interval': (200, 500)}
+        }
+    },
+    {
+        'id': 'dont_talk',
+        'title': 'Don\'t Talk',
+        'file': 'sounds/dont-talk-315229.mp3',
+        'bpm': 140,  # Default BPM, adjust if needed
+        'difficulty_modes': {
+            'beginner': {'speed': 4.5, 'interval': (900, 1200)},
+            'easy': {'speed': 5.5, 'interval': (700, 1000)},
+            'normal': {'speed': 7, 'interval': (500, 800)},
+            'hard': {'speed': 8.5, 'interval': (300, 600)},
+            'expert': {'speed': 10.5, 'interval': (150, 400)}
+        }
+    },
+    {
+        'id': 'titanium',
+        'title': 'Titanium',
+        'file': 'sounds/titanium-170190.mp3',
+        'bpm': 126,
+        'difficulty_modes': {
+            'beginner': {'speed': 4.2, 'interval': (950, 1250)},
+            'easy': {'speed': 5.3, 'interval': (750, 1050)},
+            'normal': {'speed': 6.8, 'interval': (550, 850)},
+            'hard': {'speed': 8.3, 'interval': (350, 650)},
+            'expert': {'speed': 10.2, 'interval': (180, 450)}
+        }
+    },
+    {
+        'id': 'lost_in_dreams',
+        'title': 'Lost in Dreams',
+        'file': 'sounds/lost-in-dreams-abstract-chill-downtempo-cinematic-future-beats-270241.mp3',
+        'bpm': 90,
+        'difficulty_modes': {
+            'beginner': {'speed': 3.5, 'interval': (1100, 1400)},
+            'easy': {'speed': 4.5, 'interval': (900, 1200)},
+            'normal': {'speed': 5.5, 'interval': (700, 1000)},
+            'hard': {'speed': 7.0, 'interval': (500, 800)},
+            'expert': {'speed': 8.5, 'interval': (250, 550)}
+        }
+    },
+    {
+        'id': 'spinning_head',
+        'title': 'Spinning Head',
+        'file': 'sounds/spinning-head-271171.mp3',
+        'bpm': 128,
+        'difficulty_modes': {
+            'beginner': {'speed': 4.3, 'interval': (930, 1230)},
+            'easy': {'speed': 5.4, 'interval': (730, 1030)},
+            'normal': {'speed': 7.0, 'interval': (530, 830)},
+            'hard': {'speed': 8.6, 'interval': (330, 630)},
+            'expert': {'speed': 10.5, 'interval': (170, 430)}
+        }
+    },
+    {
+        'id': 'future_design',
+        'title': 'Future Design',
+        'file': 'sounds/future-design-344320.mp3',
+        'bpm': 122,
+        'difficulty_modes': {
+            'beginner': {'speed': 4.1, 'interval': (970, 1270)},
+            'easy': {'speed': 5.2, 'interval': (770, 1070)},
+            'normal': {'speed': 6.7, 'interval': (570, 870)},
+            'hard': {'speed': 8.2, 'interval': (370, 670)},
+            'expert': {'speed': 10.0, 'interval': (190, 470)}
+        }
+    },
+    {
+        'id': 'kugelsicher',
+        'title': 'Kugelsicher',
+        'file': 'sounds/kugelsicher-by-tremoxbeatz-302838.mp3',
+        'bpm': 95,
+        'difficulty_modes': {
+            'beginner': {'speed': 3.8, 'interval': (1050, 1350)},
+            'easy': {'speed': 4.8, 'interval': (850, 1150)},
+            'normal': {'speed': 6.0, 'interval': (650, 950)},
+            'hard': {'speed': 7.5, 'interval': (450, 750)},
+            'expert': {'speed': 9.0, 'interval': (220, 500)}
+        }
+    }
+]
 VIDEO_FILE = 'background_video.mp4'
 FPS = 60
 
@@ -50,6 +145,8 @@ JUDGMENT_LINE = HEIGHT - 100
 # Game variables
 score = 0
 combo = 0
+misses = 0
+MAX_MISSES = 10  # Increased miss limit to 10
 notes = []
 active_notes = set()  # Track which notes are currently being hit
 spawn_timer = 0
@@ -58,12 +155,13 @@ key_bindings = [pygame.K_a, pygame.K_s, pygame.K_d, pygame.K_f]
 key_states = {key: False for key in key_bindings}  # Track key states
 high_scores = []
 MAX_HIGH_SCORES = 5
+current_song = SONG_LIBRARY[0]  # Default to first song in the library
 DIFFICULTIES = {
-    'beginner': {'speed': 2, 'interval': (1000, 1500), 'bpm': 60},
-    'easy': {'speed': 3, 'interval': (800, 1200), 'bpm': 90},
-    'normal': {'speed': 5, 'interval': (600, 1000), 'bpm': 120},
-    'hard': {'speed': 7, 'interval': (400, 800), 'bpm': 150},
-    'expert': {'speed': 9, 'interval': (200, 600), 'bpm': 180}
+    'beginner': {'speed': 4, 'interval': (1000, 1300), 'bpm': 100},
+    'easy': {'speed': 5, 'interval': (800, 1100), 'bpm': 120},
+    'normal': {'speed': 6.5, 'interval': (600, 900), 'bpm': 140},
+    'hard': {'speed': 7.5, 'interval': (400, 700), 'bpm': 160},
+    'expert': {'speed': 9, 'interval': (200, 500), 'bpm': 180}
 }
 current_difficulty = 'normal'
 
@@ -99,65 +197,146 @@ video_size = (WIDTH, HEIGHT)
 video_pos = (0, 0)
 
 def init_video():
-    global video_player, video_size, video_pos, background_image
+    global video_player, video_size, video_pos, background_image, last_valid_frame
     video_player = None
+    last_valid_frame = None
     
-    # Try to load video first
-    try:
-        if os.path.exists(VIDEO_FILE):
-            video_player = MediaPlayer(VIDEO_FILE, loop=True, ff_opts={'paused': False, 'sync': 'video'})
-            video_info = video_player.get_metadata()
-            if video_info and 'src_vid_size' in video_info:
-                video_width, video_height = video_info['src_vid_size']
-                if video_width > 0 and video_height > 0:  # Ensure valid dimensions
-                    video_ratio = video_width / video_height
-                    target_width = int(HEIGHT * video_ratio)
-                    video_size = (max(100, min(target_width, WIDTH)), HEIGHT)  # Ensure reasonable size
-                    video_pos = ((WIDTH - video_size[0]) // 2, 0)
-                    print(f"Video initialized: {video_size[0]}x{video_size[1]}")
-                    return
-    except Exception as e:
-        print(f"Video initialization warning: {e}")
-    
-    # Fallback to static background if video fails
+    # Try to load static background first as fallback
     try:
         background_image = pygame.image.load('menu_background.jpg').convert()
         img_ratio = background_image.get_width() / background_image.get_height()
         target_width = int(HEIGHT * img_ratio)
         background_image = pygame.transform.scale(background_image, (target_width, HEIGHT))
-        print("Using static background image")
+        last_valid_frame = background_image
+        print("Loaded static background image")
     except Exception as e:
         print(f"Failed to load background image: {e}")
         background_image = None
+    
+    # Try to load video
+    try:
+        if not os.path.exists(VIDEO_FILE):
+            print(f"Video file not found: {VIDEO_FILE}")
+            return
+            
+        print(f"Initializing video: {VIDEO_FILE}")
+        video_player = MediaPlayer(
+            VIDEO_FILE, 
+            loop=True, 
+            ff_opts={
+                'paused': False, 
+                'sync': 'video',
+                'an': True,  # Disable audio
+                'sn': 'v',   # Force video stream
+                'hwaccel': 'auto'  # Try hardware acceleration
+            }
+        )
+        
+        # Wait a bit for initialization
+        pygame.time.delay(200)
+        
+        # Try to get video metadata
+        video_info = video_player.get_metadata()
+        print(f"Video metadata: {video_info}")
+        
+        if video_info and 'src_vid_size' in video_info:
+            video_width, video_height = video_info['src_vid_size']
+            print(f"Video dimensions: {video_width}x{video_height}")
+            
+            if video_width > 0 and video_height > 0:
+                # Calculate aspect ratio and scale
+                video_ratio = video_width / video_height
+                target_width = int(HEIGHT * video_ratio)
+                video_size = (min(target_width, WIDTH), HEIGHT)
+                video_pos = ((WIDTH - video_size[0]) // 2, 0)
+                print(f"Video will be displayed at {video_size} position {video_pos}")
+                
+                # Try to get a few frames to ensure video is playing
+                for _ in range(10):  # Try up to 10 times
+                    frame, val = video_player.get_frame()
+                    if frame and frame != 'eof':
+                        img, pts = frame
+                        if img is not None:
+                            print("Successfully got first video frame")
+                            return
+                    pygame.time.delay(50)  # Small delay between attempts
+                
+                print("Warning: Could not get valid video frames after multiple attempts")
+                
+    except Exception as e:
+        print(f"Video initialization error: {str(e)}")
+        video_player = None
+
+# Store the last valid frame to prevent flickering
+last_valid_frame = None
+
+last_frame_time = 0
+frame_count = 0
 
 def update_video():
-    if video_player:
+    global video_player, last_valid_frame, last_frame_time, frame_count
+    
+    # If we don't have a video player, return the last valid frame (or None)
+    if not video_player:
+        return last_valid_frame
+    
+    try:
+        # Try to get a frame with a small timeout
         frame, val = video_player.get_frame()
-        if frame != 'eof' and frame is not None:
-            # Convert frame to Pygame surface
-            img, pts = frame
-            img_data = img.to_bytearray()[0]
-            video_surface = pygame.image.frombuffer(
-                img_data, img.get_size(), 'RGB'
-            ).convert()
+        
+        # Debug info (print once per second)
+        frame_count += 1
+        current_time = pygame.time.get_ticks()
+        if current_time - last_frame_time > 1000:  # Every second
+            print(f"Video frame: {frame_count}, Status: {val}, Frame type: {type(frame).__name__ if frame else 'None'}")
+            last_frame_time = current_time
+        
+        # Handle end of video
+        if val == 'eof' or frame == 'eof':
+            print("End of video, seeking to start...")
+            video_player.seek(0, relative=False)
+            video_player.set_pause(False)
+            return last_valid_frame  # Return last frame while seeking
+        
+        # Process the frame if we have one
+        if frame and frame != 'eof':
+            try:
+                img, pts = frame
+                if img is not None:
+                    # Convert frame to Pygame surface
+                    img_data = img.to_bytearray()[0]
+                    video_surface = pygame.image.frombuffer(
+                        img_data, 
+                        img.get_size(), 
+                        'RGB'
+                    ).convert()
+                    
+                    # Scale the video to fit while maintaining aspect ratio
+                    video_surface = pygame.transform.scale(video_surface, video_size)
+                    last_valid_frame = video_surface
+                    return video_surface
+                    
+            except Exception as e:
+                print(f"Error processing video frame: {str(e)}")
+                # Fall through to return last_valid_frame below
+        
+        # If we get here, we didn't get a valid frame
+        if frame_count % 60 == 0:  # Only print this occasionally to avoid spam
+            print(f"No valid frame received (attempt {frame_count})")
             
-            # Scale the video to fit the screen while maintaining aspect ratio
-            video_surface = pygame.transform.scale(video_surface, video_size)
-            return video_surface
-    return None
+    except Exception as e:
+        print(f"Error in update_video: {str(e)}")
+        # Try to recover by reinitializing the video player
+        if frame_count % 120 == 0:  # Only try to reinitialize occasionally
+            print("Attempting to reinitialize video...")
+            init_video()
+    
+    return last_valid_frame  # Return the last valid frame if we couldn't get a new one
 
 def draw_video():
-    # Try to draw video frame
-    if video_player:
-        video_frame = update_video()
-        if video_frame:
-            screen.blit(video_frame, video_pos)
-    # Fall back to static background if available
-    elif background_image:
-        screen.blit(background_image, ((WIDTH - background_image.get_width()) // 2, 0))
-    # Fall back to black background
-    else:
-        screen.fill(BLACK)
+    # Draw video frame if available
+    if video_player and last_valid_frame:
+        screen.blit(last_valid_frame, video_pos)
     
     # Add dark overlay for better visibility
     overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
@@ -190,8 +369,11 @@ class Note:
     
     def update(self):
         self.y += self.speed
-        if self.y > HEIGHT:
+        # Check if note passed the judgment line without being hit
+        if self.y > JUDGMENT_LINE + 50 and not self.hit and not self.missed:
             self.missed = True
+            return 'auto_miss'  # Return that this was an automatic miss
+        return None
     
     def draw(self, surface):
         if not self.hit and not self.missed:
@@ -201,9 +383,15 @@ class Note:
     def check_hit(self, key_pressed):
         if not self.hit and not self.missed and key_pressed:
             distance = abs((self.y + self.height/2) - JUDGMENT_LINE)
-            if distance < 30:  # Hit window of 30 pixels
+            if distance < 10:  # Perfect hit window (10 pixels)
                 self.hit = True
-                return 'hit'
+                return 'perfect'
+            elif distance < 25:  # Good hit window (25 pixels)
+                self.hit = True
+                return 'good'
+            elif distance < 40:  # Okay hit window (40 pixels)
+                self.hit = True
+                return 'okay'
             elif distance < 60:  # Near miss window
                 self.missed = True
                 return 'near_miss'
@@ -239,8 +427,10 @@ def draw_lanes():
 def draw_score():
     score_text = font.render(f'Score: {int(score)}', True, WHITE)
     combo_text = font.render(f'Combo: {combo}', True, WHITE)
+    misses_text = font.render(f'Misses: {misses}/{MAX_MISSES}', True, (255, 100, 100) if misses >= 2 else WHITE)
     screen.blit(score_text, (20, PROGRESS_BAR_HEIGHT + 20))
     screen.blit(combo_text, (20, PROGRESS_BAR_HEIGHT + 60))
+    screen.blit(misses_text, (20, PROGRESS_BAR_HEIGHT + 100))
     
     # Draw combo text with size based on combo count
     if combo > 5:
@@ -254,9 +444,15 @@ def draw_score():
     # Draw hit/miss feedback
     if current_feedback:
         feedback_font = pygame.font.Font(None, 48)
-        if current_feedback == 'hit':
-            text = random.choice(['PERFECT!', 'GREAT!', 'GOOD!', 'NICE!'])
+        if current_feedback == 'perfect':
+            text = 'PERFECT!'
+            color = (255, 215, 0)  # Gold
+        elif current_feedback == 'good':
+            text = 'GOOD!'
             color = (100, 255, 100)  # Green
+        elif current_feedback == 'okay':
+            text = 'OKAY!'
+            color = (100, 200, 255)  # Light blue
         elif current_feedback == 'near_miss':
             text = 'CLOSE!'
             color = (255, 255, 0)  # Yellow
@@ -289,12 +485,102 @@ def draw_high_scores(surface, x, y):
         text = font.render(score_text, True, WHITE)
         surface.blit(text, (x, y + 40 + i * 30))
 
+def show_song_selection():
+    global current_difficulty, current_song
+    
+    selected_song = 0
+    selected_difficulty = list(current_song['difficulty_modes'].keys()).index(current_difficulty)
+    difficulties = list(current_song['difficulty_modes'].keys())
+    
+    title_font = pygame.font.Font(None, 80)
+    song_font = pygame.font.Font(None, 48)
+    diff_font = pygame.font.Font(None, 36)
+    small_font = pygame.font.Font(None, 28)
+    
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+                
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    selected_song = (selected_song - 1) % len(SONG_LIBRARY)
+                    sound_manager.play('menu')
+                    # Update available difficulties for selected song
+                    difficulties = list(SONG_LIBRARY[selected_song]['difficulty_modes'].keys())
+                    selected_difficulty = min(selected_difficulty, len(difficulties) - 1)
+                elif event.key == pygame.K_DOWN:
+                    selected_song = (selected_song + 1) % len(SONG_LIBRARY)
+                    sound_manager.play('menu')
+                    # Update available difficulties for selected song
+                    difficulties = list(SONG_LIBRARY[selected_song]['difficulty_modes'].keys())
+                    selected_difficulty = min(selected_difficulty, len(difficulties) - 1)
+                elif event.key == pygame.K_LEFT:
+                    selected_difficulty = (selected_difficulty - 1) % len(difficulties)
+                    sound_manager.play('menu')
+                elif event.key == pygame.K_RIGHT:
+                    selected_difficulty = (selected_difficulty + 1) % len(difficulties)
+                    sound_manager.play('menu')
+                elif event.key == pygame.K_RETURN:
+                    sound_manager.play('select')
+                    current_song = SONG_LIBRARY[selected_song]
+                    current_difficulty = difficulties[selected_difficulty]
+                    return True  # Start game
+                elif event.key == pygame.K_ESCAPE:
+                    sound_manager.play('select')
+                    return False  # Back to menu
+        
+        # Draw
+        screen.fill((0, 0, 0))
+        
+        # Draw title
+        title = title_font.render("SELECT SONG", True, (255, 255, 255))
+        screen.blit(title, (WIDTH//2 - title.get_width()//2, 50))
+        
+        # Draw song list
+        for i, song in enumerate(SONG_LIBRARY):
+            y_pos = 180 + i * 60
+            color = (255, 255, 0) if i == selected_song else (200, 200, 200)
+            text = song_font.render(song['title'], True, color)
+            screen.blit(text, (WIDTH//2 - text.get_width()//2, y_pos))
+            
+            # Draw BPM info
+            bpm_text = small_font.render(f"{song['bpm']} BPM", True, (150, 150, 150))
+            screen.blit(bpm_text, (WIDTH//2 + 200, y_pos + 10))
+        
+        # Draw difficulty selector
+        diff_y = HEIGHT - 150
+        diff_title = diff_font.render("DIFFICULTY:", True, (200, 200, 200))
+        screen.blit(diff_title, (WIDTH//2 - 200, diff_y))
+        
+        for i, diff in enumerate(difficulties):
+            x_pos = WIDTH//2 - 100 + i * 120
+            color = (255, 255, 0) if i == selected_difficulty else (150, 150, 150)
+            text = diff_font.render(diff.upper(), True, color)
+            screen.blit(text, (x_pos, diff_y + 50))
+        
+        # Draw controls
+        controls = [
+            "↑/↓: Select Song",
+            "←/→: Change Difficulty",
+            "ENTER: Start Game",
+            "ESC: Back to Menu"
+        ]
+        
+        for i, control in enumerate(controls):
+            text = small_font.render(control, True, (150, 150, 150))
+            screen.blit(text, (50, HEIGHT - 80 + i * 30))
+        
+        pygame.display.flip()
+        clock.tick(FPS)
+
 def show_start_menu():
-    global current_difficulty
+    global current_difficulty, current_song
     
     # Load menu background
     try:
-        menu_bg = pygame.image.load('menu_background.jpg')
+        menu_bg = pygame.image.load('start_screen.jpg')
         # Scale background to fit screen while maintaining aspect ratio
         bg_ratio = menu_bg.get_width() / menu_bg.get_height()
         new_width = int(HEIGHT * bg_ratio)
@@ -322,24 +608,32 @@ def show_start_menu():
         text_surface = font.render(text, True, color)
         screen.blit(text_surface, (x - text_surface.get_width()//2, y))
     
-    # Difficulty options
-    difficulty_options = list(DIFFICULTIES.keys())
-    current_difficulty_index = difficulty_options.index(current_difficulty)
+    # Create difficulty display with current selection highlighted
+    difficulty_display = [
+        "1 - BEGINNER (Slow)",
+        "2 - EASY",
+        "3 - NORMAL (Default)",
+        "4 - HARD",
+        "5 - EXPERT (Fast)"
+    ]
+    
+    # Highlight current difficulty
+    diff_index = list(DIFFICULTIES.keys()).index(current_difficulty)
+    difficulty_display[diff_index] = f"→ {difficulty_display[diff_index]} (SELECTED)"
     
     instructions = [
         "A S D F - Hit notes in the corresponding lanes",
-        "1 - Beginner (Slow)",
-        "2 - Easy",
-        "3 - Normal (Default)",
-        "4 - Hard",
-        "5 - Expert (Very Fast)",
+        "",
+        "SELECT DIFFICULTY (1-5):",
+        *difficulty_display,
+        "",
         "M - Toggle sound",
         "Q - Pause/Resume",
         "L - View Leaderboard",
-        "ESC - Return to menu",
         "",
         f"Current: {current_difficulty.upper()}",
-        "Press any key to start!"
+        "",
+        "Press ENTER to select song and start!"
     ]
     
     # Create a pulsing effect for the title
@@ -378,6 +672,14 @@ def show_start_menu():
                    (WIDTH//2 - scaled_title.get_width()//2, 
                     HEIGHT//6 - scaled_title.get_height()//2))
         
+        # Draw current song and difficulty
+        song_text = instruction_font.render(
+            f"Current: {current_song['title']} ({current_difficulty.upper()})", 
+            True, 
+            (200, 200, 255)
+        )
+        screen.blit(song_text, (WIDTH//2 - song_text.get_width()//2, HEIGHT//3 + 20))
+        
         # Draw instructions with fade-in effect
         for i, line in enumerate(instructions):
             if i == len(instructions) - 1:  # Last line (press any key)
@@ -402,29 +704,48 @@ def show_start_menu():
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
-                waiting = False
+                elif event.key == pygame.K_RETURN:
+                    # Show song selection when ENTER is pressed
+                    if show_song_selection():
+                        waiting = False  # Start game if a song was selected
+                        sound_manager.play('select')
+                # Handle difficulty shortcuts (1-5)
+                elif pygame.K_1 <= event.key <= pygame.K_5:  # 1-5 keys
+                    diff_index = event.key - pygame.K_1  # 0-4
+                    difficulty_list = list(DIFFICULTIES.keys())
+                    if 0 <= diff_index < len(difficulty_list):
+                        current_difficulty = difficulty_list[diff_index]
+                        sound_manager.play('menu')
         
         clock.tick(FPS)
 
 def reset_game():
-    global score, combo, notes, spawn_timer, current_feedback, feedback_timer, NOTE_SPEED
-    # Start or restart music
-    try:
-        pygame.mixer.music.play(-1)  # Loop indefinitely
-    except:
-        print("Could not play background music")
+    global notes, active_notes, score, combo, misses, spawn_timer, current_feedback, feedback_timer, last_beat_time, beat_interval, NOTE_SPEED, spawn_interval
+    
+    # Reset game state
+    notes = []
+    active_notes = set()
     score = 0
     combo = 0
-    notes = []
-    active_notes.clear()
-    spawn_timer = 0
+    misses = 0
     current_feedback = None
     feedback_timer = 0
-    NOTE_SPEED = DIFFICULTIES[current_difficulty]['speed']
-    global beat_interval, last_beat_time
-    bpm = DIFFICULTIES[current_difficulty]['bpm']
+    spawn_timer = 0
+    
+    # Set game parameters based on song and difficulty
+    difficulty_settings = current_song['difficulty_modes'][current_difficulty]
+    min_interval, max_interval = difficulty_settings['interval']
+    spawn_interval = random.randint(min_interval, max_interval)
+    NOTE_SPEED = difficulty_settings['speed']
+    
+    # Calculate beat interval based on song BPM
+    bpm = current_song['bpm']
     beat_interval = (60.0 / bpm) * 1000  # Convert BPM to milliseconds
     last_beat_time = pygame.time.get_ticks()
+    
+    # Load and play the selected song
+    sound_manager.load_music(current_song['file'])
+    sound_manager.play_music()
 
 def show_game_over():
     global score, current_difficulty
@@ -477,10 +798,13 @@ def show_game_over():
                     elif event.key == pygame.K_BACKSPACE:
                         player_name = player_name[:-1]
                     elif len(player_name) < 10 and event.unicode.isalnum():
-                        player_name += event.upper()
+                        player_name += event.unicode.upper()
                 else:
-                    if event.key == pygame.K_ESCAPE:
+                    if event.key == pygame.K_ENTER:
                         return
+                    elif event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
                     else:
                         return
         
@@ -542,7 +866,7 @@ def show_leaderboard():
             screen.blit(date_text, (x_positions[3], 230 + i * 40))
     
     # Instructions
-    back_text = score_font.render("Press ESC to return to menu", True, (150, 150, 150))
+    back_text = score_font.render("Press ENTER to return to menu", True, (150, 150, 150))
     screen.blit(back_text, (WIDTH//2 - back_text.get_width()//2, HEIGHT - 100))
     
     pygame.display.flip()
@@ -555,8 +879,11 @@ def show_leaderboard():
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_ENTER:
                     waiting = False
+                elif event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
         clock.tick(FPS)
 
 def get_player_name():
@@ -649,9 +976,10 @@ def draw_ui():
         screen.blit(combo_text, (20, PROGRESS_BAR_HEIGHT + 60))
 
 def main():
-    global spawn_timer, score, combo, current_feedback, feedback_timer, current_difficulty, NOTE_SPEED, spawn_interval, paused
+    global spawn_timer, score, combo, misses, current_feedback, feedback_timer, current_difficulty, NOTE_SPEED, spawn_interval
     running = True
     paused = False
+    game_over = False
     last_beat_time = pygame.time.get_ticks()
     
     # Initialize video
@@ -676,6 +1004,9 @@ def main():
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+                elif event.key == pygame.K_RETURN:
                     sound_manager.play('menu')
                     # Check if this is a high score
                     if leaderboard.initialized and leaderboard.is_high_score(score, current_difficulty):
@@ -698,7 +1029,6 @@ def main():
                     pygame.display.flip()
                     continue
                 elif event.key == pygame.K_q:  # Pause/Resume with 'q'
-                    global paused
                     paused = not paused
                     if video_player:
                         video_player.set_pause(paused)
@@ -758,11 +1088,20 @@ def main():
                         result = closest_note.check_hit(True)
                         closest_note.hit_processed = True
                         
-                        if result == 'hit':
-                            score += 100 * (1 + combo * 0.1)
+                        if result in ['perfect', 'good', 'okay']:
+                            # Different scoring based on accuracy
+                            if result == 'perfect':
+                                score += 150 * (1 + combo * 0.1)  # 150% points for perfect
+                                current_feedback = 'perfect'
+                            elif result == 'good':
+                                score += 125 * (1 + combo * 0.1)  # 125% points for good
+                                current_feedback = 'good'
+                            elif result == 'okay':
+                                score += 100 * (1 + combo * 0.1)  # 100% points for okay
+                                current_feedback = 'okay'
+                            
                             combo += 1
                             hit = True
-                            current_feedback = 'hit'
                             feedback_timer = feedback_duration
                             sound_manager.play('hit')
                             if combo % 10 == 0 and combo > 0:
@@ -799,20 +1138,41 @@ def main():
             
             # Update notes
             for note in notes[:]:
-                note.update()
+                result = note.update()
                 if note.missed:
                     notes.remove(note)
-                    if combo > 0:  # Only play miss sound if we had a combo
+                    if result == 'auto_miss':  # Note passed the judgment line
+                        misses += 1
+                        combo = 0
+                        current_feedback = 'miss'
+                        feedback_timer = feedback_duration
                         sound_manager.play('miss')
-                    combo = 0
+                        
+                        # Check for game over
+                        if misses >= MAX_MISSES:
+                            game_over = True
                 elif note.hit:
                     notes.remove(note)
         
-        # Draw everything
+        # Check for game over
+        if game_over:
+            show_game_over()
+            reset_game()
+            game_over = False
+            continue
+        
+        # Clear the screen with black (this will be overdrawn by the video)
         screen.fill(BLACK)
         
-        # Draw video background
-        draw_video()
+        # Always try to update the video frame
+        if video_player:
+            update_video()  # This will update last_valid_frame
+        
+        # Draw the background (video or static)
+        if video_player and last_valid_frame:
+            screen.blit(last_valid_frame, video_pos)
+        elif background_image:
+            screen.blit(background_image, ((WIDTH - background_image.get_width()) // 2, 0))
         
         # Draw UI elements (progress bar first, behind notes)
         draw_ui()
@@ -827,7 +1187,7 @@ def main():
         
         # Apply hit/miss tint
         if current_feedback and feedback_timer > 0:
-            if current_feedback == 'hit':
+            if current_feedback in ['perfect', 'good', 'okay']:
                 tint = HIT_COLOR
             else:
                 tint = MISS_COLOR

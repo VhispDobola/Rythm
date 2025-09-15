@@ -34,7 +34,7 @@ SONG_LIBRARY = [
     {
         'id': 'dont_talk',
         'title': 'Don\'t Talk',
-        'file': 'sounds/dont-talk-315229.mp3',
+        'file': 'assets/music/dont_talk.mp3',
         'bpm': 140,  # Default BPM, adjust if needed
         'difficulty_modes': {
             'beginner': {'speed': 4.5, 'interval': (900, 1200)},
@@ -181,7 +181,7 @@ current_feedback = None  # 'hit' or 'miss'
 # Initialize sound manager and load music
 def load_background_music():
     try:
-        pygame.mixer.music.load('background_music.mp3')
+        pygame.mixer.music.load('assets/music/background_music.mp3')
         pygame.mixer.music.set_volume(0.5)  # 50% volume
     except Exception as e:
         print(f"Could not load background music: {e}")
@@ -884,6 +884,10 @@ def show_leaderboard():
                 elif event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
+                elif event.key == pygame.K_q:  # Q key returns to main menu
+                    show_start_menu()
+                    reset_game()
+                    continue
         clock.tick(FPS)
 
 def get_player_name():
@@ -1006,6 +1010,10 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
+                elif event.key == pygame.K_q:  # Q key returns to main menu
+                    show_start_menu()
+                    reset_game()
+                    continue
                 elif event.key == pygame.K_RETURN:
                     sound_manager.play('menu')
                     # Check if this is a high score

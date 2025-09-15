@@ -14,8 +14,9 @@ class SoundManager:
     def load_level_complete_sound(self):
         """Load the level complete sound"""
         try:
-            if os.path.exists('level_complete.mp3'):
-                self.level_complete_sound = pygame.mixer.Sound('level_complete.mp3')
+            path = 'assets/sounds/level_complete.mp3'
+            if os.path.exists(path):
+                self.level_complete_sound = pygame.mixer.Sound(path)
                 self.level_complete_sound.set_volume(0.7)
         except Exception as e:
             print(f"Error loading level complete sound: {e}")
@@ -23,8 +24,9 @@ class SoundManager:
     def load_combo_special_sound(self):
         """Load the special combo sound"""
         try:
-            if os.path.exists('combo_special.mp3'):
-                self.combo_special_sound = pygame.mixer.Sound('combo_special.mp3')
+            path = 'assets/sounds/combo_special.mp3'
+            if os.path.exists(path):
+                self.combo_special_sound = pygame.mixer.Sound(path)
                 self.combo_special_sound.set_volume(0.7)
         except Exception as e:
             print(f"Error loading combo special sound: {e}")
@@ -32,10 +34,10 @@ class SoundManager:
     def load_sounds(self):
         """Load all game sounds"""
         sound_files = {
-            'hit': 'hit.wav',
-            'miss': 'miss.wav',
-            'combo': 'combo.wav',
-            'menu': 'menu.wav'
+            'hit': 'assets/sounds/hit.wav',
+            'miss': 'assets/sounds/miss.wav',
+            'combo': 'assets/sounds/combo.wav',
+            'menu': 'assets/sounds/menu.wav'
         }
         
         # Create silent sound as fallback
